@@ -5,7 +5,7 @@ A full-stack web app that simulates agentic reasoning and tool execution: interp
 ## Prerequisites
 
 - **npm path:** Node.js (v18+) and Python (3.10+) on your machine.
-- **Docker path:** Docker and Docker Compose.
+- **Docker path:** Docker and Docker Compose. On some systems (e.g. Ubuntu with `docker.io`) only `docker-compose` (with hyphen) is available; both variants work.
 
 ## Quick start (npm)
 
@@ -27,7 +27,10 @@ From the repo root:
 ```bash
 git clone <your-repo-url>
 cd lightweight-agent-simulator
+# Either:
 docker compose up
+# Or (if your system only has docker-compose):
+docker-compose up
 ```
 
 Then open **http://localhost:5173**. The frontend proxies `/api` to the backend container.
@@ -47,12 +50,17 @@ python -m pytest tests/ -v
 
 ```bash
 docker compose run backend python -m pytest tests/ -v
+# or: docker-compose run backend python -m pytest tests/ -v
 ```
 
 ## Which to use?
 
 - **npm:** Best for day-to-day development (hot reload, single backend process, no Docker).
 - **Docker:** Best when you want a consistent environment or prefer not to install Node/Python locally.
+
+## Troubleshooting
+
+- If `docker compose` fails with "unknown command", use `docker-compose` (with hyphen) instead. Both run the same Compose stack.
 
 ## API and overrides
 
