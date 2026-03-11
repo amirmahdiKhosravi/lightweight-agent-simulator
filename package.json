@@ -1,0 +1,16 @@
+{
+  "name": "lightweight-agent-simulator",
+  "private": true,
+  "description": "Full-stack agent simulator: FastAPI backend + React/Vite frontend",
+  "scripts": {
+    "install": "npm run install:frontend && npm run install:backend",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "node scripts/install-backend.js",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "node scripts/start-backend.js",
+    "dev:frontend": "cd frontend && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
