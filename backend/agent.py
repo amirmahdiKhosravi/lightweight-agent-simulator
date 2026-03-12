@@ -5,7 +5,7 @@ Implements the core parse → resolve → execute pipeline and records
 every intermediate step into an execution trace for the frontend.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from tools import CalculatorTool, WeatherMockTool, TextProcessorTool
 from parser import IntentParser
 
@@ -71,5 +71,5 @@ class Agent:
             "final_output": final_output,
             "execution_steps": execution_steps,
             "tools_used": tools_used,
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
         }
