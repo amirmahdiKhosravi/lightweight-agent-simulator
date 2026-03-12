@@ -4,18 +4,123 @@ A full-stack web application that simulates agentic AI reasoning without relying
 
 ## Table of Contents
 
-- [Architecture Overview](#architecture-overview)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
+- [How to Run the Project](#how-to-run-the-project)
 - [Running Tests](#running-tests)
-- [API Reference](#api-reference)
-- [Adding a New Tool](#adding-a-new-tool)
+- [Tech Stack and Dependencies](#tech-stack-and-dependencies)
 - [Design Decisions](#design-decisions)
+- [Time Spent](#time-spent)
 - [Production Considerations](#production-considerations)
-- [Troubleshooting](#troubleshooting)
+- [Other Details](#other-details)
+  - [Architecture Overview](#architecture-overview)
+  - [Project Structure](#project-structure)
+  - [API Reference](#api-reference)
+  - [Adding a New Tool](#adding-a-new-tool)
 
-## Architecture Overview
+## How to Run the Project
+
+There is no need to start the frontend and backend separately — the project includes orchestration scripts that handle both with a single command.
+
+### Prerequisites
+
+- **npm path:** Node.js (v18+) and Python (3.10+)
+- **Docker path:** Docker and Docker Compose
+
+### Option 1: npm 
+
+```bash
+git clone https://github.com/amirmahdiKhosravi/lightweight-agent-simulator.git
+cd lightweight-agent-simulator
+npm install
+npm run dev
+```
+
+`npm install` installs frontend dependencies and creates a Python virtualenv with backend dependencies. `npm run dev` starts both the API (port 8000) and the Vite dev server (port 5173) with hot reload.
+
+Open **http://localhost:5173** in your browser.
+
+### Option 2: Docker
+
+```bash
+git clone https://github.com/amirmahdiKhosravi/lightweight-agent-simulator.git
+cd lightweight-agent-simulator
+docker compose up
+# or: docker-compose up
+```
+
+Open **http://localhost:5173**. The frontend container proxies `/api` requests to the backend container.
+
+## Running Tests
+
+**Local (with virtualenv):**
+
+```bash
+cd backend
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+python -m pytest tests/ -v
+```
+
+**Docker:**
+
+```bash
+docker compose run backend python -m pytest tests/ -v
+```
+
+## Tech Stack and Dependencies
+
+| Layer         | Technology                   | Role                                            |
+|---------------|------------------------------|-------------------------------------------------|
+| Frontend      | React 19, Vite 7             | UI components and development tooling           |
+| Styling       | Tailwind CSS 4               | Utility-first CSS framework                     |
+| Backend       | Python 3.10+, FastAPI        | API server and request handling                 |
+| Server        | Uvicorn                      | ASGI server for FastAPI                         |
+| Database      | SQLite                       | Lightweight persistence for task history        |
+| Validation    | Pydantic                     | Request/response schema validation              |
+| Testing       | pytest                       | Backend unit and integration tests              |
+| Orchestration | npm + concurrently           | Single-command startup for both services        |
+| Containers    | Docker, Docker Compose       | Reproducible builds and deployment              |
+
+Frontend dependencies are managed via `frontend/package.json`, and backend dependencies are listed in `backend/requirements.txt`. The root `package.json` ties everything together with orchestration scripts that install and run both layers.
+
+## Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| **Deterministic Intent Parsing** | Provides zero-latency, 100% predictable tool routing. This flawlessly satisfies the "lightweight" constraint while perfectly mocking the interface of a semantic router, keeping the focus strictly on architectural design and execution flow. |
+| **SQLite for persistence** | Zero configuration, no external services, and sufficient for a single-user demo. The DB file is created automatically on first run. |
+| **Tool registry as a dictionary** | O(1) lookup by tool name. Adding a new tool is a one-line change to the registry. |
+| **BaseTool ABC** | Enforces a consistent `execute(**kwargs)` interface across all tools, making the system extensible via the strategy pattern. |
+| **Execution trace as a first-class concept** | The step-by-step trace is the core value of the project — it makes the agent's reasoning transparent and inspectable, mirroring what tools like LangSmith provide for production LLM agents. |
+
+## Time Spent
+
+Approximately 6 hours, broken down into:
+
+- Architecture & Scaffolding (1hr)
+- Agent Domain Logic & Tools (2hrs)
+- API & Persistence Layer (1hr)
+- React Frontend & UI (1.5hrs)
+- Dockerization, Testing & Documentation (1hr)
+
+## Production Considerations
+
+This project intentionally keeps things lightweight to focus on the core agent pattern. In a production system, each layer would be replaced or augmented with battle-tested tools:
+
+| Concern | This Project | Production Alternative |
+|---------|-------------|----------------------|
+| **Intent parsing** | Rule-based (regex/keywords) | LLM-backed via [LangChain](https://www.langchain.com/) or [Semantic Kernel](https://learn.microsoft.com/en-us/semantic-kernel/) |
+| **Agent orchestration** | Simple linear pipeline | [LangGraph](https://langchain-ai.github.io/langgraph/) for stateful multi-step graphs, or [AutoGen](https://microsoft.github.io/autogen/) for multi-agent collaboration |
+| **Database** | SQLite (single file) | PostgreSQL, or a managed service like [Supabase](https://supabase.com/) |
+| **Deployment** | Docker Compose | Kubernetes, AWS ECS, or Azure Container Apps |
+| **Observability** | Execution trace in SQLite | [LangSmith](https://smith.langchain.com/) for LLM tracing, OpenTelemetry for general observability |
+| **Guardrails** | None | Input validation, output filtering, and rate limiting to prevent misuse or unsafe tool execution |
+
+**Azure-centric stack:** If your organization uses Azure, [Semantic Kernel](https://learn.microsoft.com/en-us/semantic-kernel/) (C# or Python) integrates natively with Azure OpenAI, Azure AI Search, and Azure Cosmos DB, providing a production-grade equivalent of the patterns demonstrated here.
+
+**Python-centric stack:** [LangChain](https://www.langchain.com/) for tool/chain abstractions + [LangGraph](https://langchain-ai.github.io/langgraph/) for complex agent workflows + [LangSmith](https://smith.langchain.com/) for tracing and evaluation form the most widely adopted open-source stack.
+
+## Other Details
+
+### Architecture Overview
 
 The system follows a pipeline pattern: user input flows through a parser that determines intent, a router that selects the right tool, and a tool executor that returns a structured trace.
 
@@ -50,21 +155,7 @@ The system follows a pipeline pattern: user input flows through a parser that de
 5. The result and a step-by-step execution trace are saved to SQLite and returned to the frontend
 6. The frontend renders the result and the full trace for inspection
 
-## Tech Stack
-
-| Layer         | Technology                   |
-|---------------|------------------------------|
-| Frontend      | React 19, Vite 7             |
-| Styling       | Tailwind CSS 4               |
-| Backend       | Python 3.10+, FastAPI        |
-| Server        | Uvicorn                      |
-| Database      | SQLite                       |
-| Validation    | Pydantic                     |
-| Testing       | pytest                       |
-| Orchestration | npm + concurrently           |
-| Containers    | Docker, Docker Compose       |
-
-## Project Structure
+### Project Structure
 
 ```
 lightweight-agent-simulator/
@@ -100,61 +191,14 @@ lightweight-agent-simulator/
 └── README.md
 ```
 
-## Getting Started
-
-### Prerequisites
-
-- **npm path:** Node.js (v18+) and Python (3.10+)
-- **Docker path:** Docker and Docker Compose
-
-### Option 1: npm (recommended for development)
-
-```bash
-git clone <your-repo-url>
-cd lightweight-agent-simulator
-npm install
-npm run dev
-```
-
-`npm install` installs frontend dependencies and creates a Python virtualenv with backend dependencies. `npm run dev` starts both the API (port 8000) and the Vite dev server (port 5173) with hot reload.
-
-Open **http://localhost:5173** in your browser.
-
-### Option 2: Docker
-
-```bash
-git clone <your-repo-url>
-cd lightweight-agent-simulator
-docker compose up
-# or: docker-compose up
-```
-
-Open **http://localhost:5173**. The frontend container proxies `/api` requests to the backend container.
-
-## Running Tests
-
-**Local (with virtualenv):**
-
-```bash
-cd backend
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-python -m pytest tests/ -v
-```
-
-**Docker:**
-
-```bash
-docker compose run backend python -m pytest tests/ -v
-```
-
-## API Reference
+### API Reference
 
 | Method | Endpoint      | Description                          | Request Body                | Response                                              |
 |--------|---------------|--------------------------------------|-----------------------------|-------------------------------------------------------|
 | POST   | `/api/tasks`  | Submit a task for the agent to solve | `{ "task": "5 + 3" }`      | `{ final_output, execution_steps, tools_used, timestamp }` |
 | GET    | `/api/tasks`  | Retrieve all past task results       | —                           | Array of task objects with the same fields plus `id`   |
 
-## Adding a New Tool
+### Adding a New Tool
 
 The system is designed around a `BaseTool` abstract class, making it straightforward to extend with new capabilities.
 
@@ -194,36 +238,3 @@ if "translate" in text_lower:
         "arguments": {"text": user_input, "target_lang": "fr"}
     }
 ```
-
-## Design Decisions
-
-| Decision | Rationale |
-|----------|-----------|
-| **Deterministic Intent Parsing** | Provides zero-latency, 100% predictable tool routing. This flawlessly satisfies the "lightweight" constraint while perfectly mocking the interface of a semantic router, keeping the focus strictly on architectural design and execution flow. |
-| **SQLite for persistence** | Zero configuration, no external services, and sufficient for a single-user demo. The DB file is created automatically on first run. |
-| **Tool registry as a dictionary** | O(1) lookup by tool name. Adding a new tool is a one-line change to the registry. |
-| **BaseTool ABC** | Enforces a consistent `execute(**kwargs)` interface across all tools, making the system extensible via the strategy pattern. |
-| **Execution trace as a first-class concept** | The step-by-step trace is the core value of the project — it makes the agent's reasoning transparent and inspectable, mirroring what tools like LangSmith provide for production LLM agents. |
-
-## Production Considerations
-
-This project intentionally keeps things lightweight to focus on the core agent pattern. In a production system, each layer would be replaced or augmented with battle-tested tools:
-
-| Concern | This Project | Production Alternative |
-|---------|-------------|----------------------|
-| **Intent parsing** | Rule-based (regex/keywords) | LLM-backed via [LangChain](https://www.langchain.com/) or [Semantic Kernel](https://learn.microsoft.com/en-us/semantic-kernel/) |
-| **Agent orchestration** | Simple linear pipeline | [LangGraph](https://langchain-ai.github.io/langgraph/) for stateful multi-step graphs, or [AutoGen](https://microsoft.github.io/autogen/) for multi-agent collaboration |
-| **Database** | SQLite (single file) | PostgreSQL, or a managed service like [Supabase](https://supabase.com/) |
-| **Deployment** | Docker Compose | Kubernetes, AWS ECS, or Azure Container Apps |
-| **Observability** | Execution trace in SQLite | [LangSmith](https://smith.langchain.com/) for LLM tracing, OpenTelemetry for general observability |
-| **Guardrails** | None | Input validation, output filtering, and rate limiting to prevent misuse or unsafe tool execution |
-
-**Azure-centric stack:** If your organization uses Azure, [Semantic Kernel](https://learn.microsoft.com/en-us/semantic-kernel/) (C# or Python) integrates natively with Azure OpenAI, Azure AI Search, and Azure Cosmos DB, providing a production-grade equivalent of the patterns demonstrated here.
-
-**Python-centric stack:** [LangChain](https://www.langchain.com/) for tool/chain abstractions + [LangGraph](https://langchain-ai.github.io/langgraph/) for complex agent workflows + [LangSmith](https://smith.langchain.com/) for tracing and evaluation form the most widely adopted open-source stack.
-
-## Troubleshooting
-
-- **`docker compose` fails with "unknown command"** — Use `docker-compose` (with hyphen) instead. Both run the same Compose stack.
-- **Backend not reachable from the frontend** — Make sure the backend is running on port 8000. If using a non-standard setup, set `VITE_API_URL` in `frontend/.env`.
-- **Port already in use** — Kill any existing process on port 5173 or 8000, or change the ports in `vite.config.js` / the uvicorn startup command.
