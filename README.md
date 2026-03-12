@@ -81,7 +81,7 @@ docker compose run backend python -m pytest tests/ -v
 
 Frontend dependencies are managed via `frontend/package.json`, and backend dependencies are listed in `backend/requirements.txt`. The root `package.json` ties everything together with orchestration scripts that install and run both layers.
 
-## Design Decisions
+## Assumptions and Tradeoffs
 
 | Decision | Rationale |
 |----------|-----------|
@@ -90,6 +90,7 @@ Frontend dependencies are managed via `frontend/package.json`, and backend depen
 | **Tool registry as a dictionary** | O(1) lookup by tool name. Adding a new tool is a one-line change to the registry. |
 | **BaseTool ABC** | Enforces a consistent `execute(**kwargs)` interface across all tools, making the system extensible via the strategy pattern. |
 | **Execution trace as a first-class concept** | The step-by-step trace is the core value of the project — it makes the agent's reasoning transparent and inspectable, mirroring what tools like LangSmith provide for production LLM agents. |
+| **Synchronous Execution vs. WebSockets** | I chose standard REST (request/response) over WebSockets/SSE for the execution trace. While real-time streaming looks flashier, standard HTTP keeps the architecture lightweight, testable, and maintainable. |
 
 ## Time Spent
 
@@ -101,7 +102,7 @@ Approximately 6 hours, broken down into:
 - React Frontend & UI (1.5hrs)
 - Dockerization, Testing & Documentation (1hr)
 
-## Production Considerations
+## Production Considerations and Improvements
 
 This project intentionally keeps things lightweight to focus on the core agent pattern. In a production system, each layer would be replaced or augmented with battle-tested tools:
 
