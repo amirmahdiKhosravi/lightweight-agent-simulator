@@ -1,3 +1,11 @@
+"""
+FastAPI application entry point.
+
+Defines the REST API that the React frontend consumes:
+  POST /api/tasks  — run a task through the agent pipeline
+  GET  /api/tasks  — retrieve previously executed tasks from SQLite
+"""
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,24 +14,24 @@ from schemas import TaskRequest, AgentResponse
 from agent import Agent
 import database
 
-# Use lifespan to initialize the database when the server starts
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Initialise the database once on server startup, before any requests."""
     database.init_db()
     yield
 
+
 app = FastAPI(title="Lightweight Agent Simulator API", lifespan=lifespan)
 
-# Critical: Allow React to communicate with this API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this to your frontend URL
+    allow_origins=["*"],  # In production, restrict to the frontend origin
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Instantiate our core agent logic
 agent_controller = Agent()
 
 @app.post("/api/tasks", response_model=AgentResponse)

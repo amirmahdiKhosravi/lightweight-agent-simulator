@@ -16,6 +16,8 @@ const venvPython = isWin
 const args = ['-m', 'uvicorn', 'main:app', '--reload'];
 const hasVenv = fs.existsSync(venvPython);
 
+// Prefer the venv Python; fall back to the system interpreter when no venv
+// exists (e.g. first run before install, or global-install workflows).
 const cmd = hasVenv ? venvPython : isWin ? 'python' : 'python3';
 const child = spawn(cmd, args, {
   cwd: backendDir,

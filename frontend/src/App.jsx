@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react'
 import { submitTask, getTaskHistory } from './api'
 import './App.css'
 
+/**
+ * Root application component.
+ *
+ * Layout: fixed history sidebar on the left, main panel (input + result +
+ * execution trace) on the right.
+ */
 function App() {
   const [taskInput, setTaskInput] = useState('')
   const [currentResult, setCurrentResult] = useState(null)
@@ -9,6 +15,7 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  /** Fetch the full task history from the backend and refresh the sidebar. */
   const loadHistory = async () => {
     try {
       const tasks = await getTaskHistory()
@@ -22,6 +29,11 @@ function App() {
     loadHistory()
   }, [])
 
+  /**
+   * Submit the current input to the agent API.
+   * On success the result panel and history sidebar are both refreshed.
+   * Network errors are surfaced with a helpful hint about starting the backend.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault()
     const task = taskInput.trim()
@@ -43,6 +55,7 @@ function App() {
     }
   }
 
+  /** Display a previously executed task from the history sidebar. */
   const showTask = (task) => {
     setCurrentResult({
       final_output: task.final_output,

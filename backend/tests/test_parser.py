@@ -1,3 +1,5 @@
+"""Tests for the rule-based IntentParser (weather / calculator / text)."""
+
 import pytest
 from parser import IntentParser
 

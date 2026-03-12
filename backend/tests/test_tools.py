@@ -1,3 +1,5 @@
+"""Unit tests for individual tool implementations."""
+
 import pytest
 from tools import CalculatorTool, WeatherMockTool, TextProcessorTool
 

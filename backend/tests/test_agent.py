@@ -1,9 +1,12 @@
+"""Tests for the Agent orchestrator (parse → execute → trace)."""
+
 import pytest
 from agent import Agent
 
 
 @pytest.fixture
 def agent():
+    """Provide a fresh Agent instance for each test."""
     return Agent()
 
 
@@ -41,8 +44,8 @@ def test_agent_happy_path_text_processor(agent):
 
 
 def test_agent_error_logged_in_trace(agent):
-    # Parser returns CalculatorTool for input containing +; give invalid expression
-    # so the calculator returns an error string (tool doesn't raise).
+    """An unparseable expression is routed to CalculatorTool which returns an
+    error string; the agent should still surface it cleanly in the trace."""
     result = agent.execute_task("foo + bar")
     assert "final_output" in result
     assert "execution_steps" in result
@@ -50,7 +53,8 @@ def test_agent_error_logged_in_trace(agent):
 
 
 def test_agent_tool_raises_caught(agent):
-    # When a tool raises, agent should catch and log in trace without crashing
+    """When a tool raises an exception the agent must not crash; it should
+    capture the error in the trace and return it as ``final_output``."""
     original_execute = agent.tools["CalculatorTool"].execute
     agent.tools["CalculatorTool"].execute = lambda **kw: (_ for _ in ()).throw(ValueError("Tool failed"))
     result = agent.execute_task("2 + 3")
