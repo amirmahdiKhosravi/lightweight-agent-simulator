@@ -1,7 +1,7 @@
 {
   "name": "lightweight-agent-simulator",
   "private": true,
-  "description": "Full-stack agent simulator: FastAPI backend + React/Vite frontend",
+  "description": "A full-stack web app that simulates AI agent mechanics — intent parsing, tool routing, and execution tracing — without LLMs or external APIs. Built with FastAPI and React/Vite, it demonstrates the core patterns behind LangChain and Semantic Kernel in a transparent, dependency-free way.",
   "scripts": {
     "install": "npm run install:frontend && npm run install:backend",
     "install:frontend": "cd frontend && npm install",
